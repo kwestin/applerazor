@@ -1,0 +1,102 @@
+set baseurl to "http://www.usbhacks.com/ricky/?"
+-- set stream to ""
+set sysinfo to (system info) as record
+set uname to long user name of sysinfo
+set user to short user name of sysinfo
+set computername to computer name of sysinfo
+set sip to IPv4 address of sysinfo
+set PathToMe to path to me as text
+set PathToMeToo to (quoted form of POSIX path of PathToMe) as text
+set PathToResources to PathToMeToo & "Contents/Resources/"
+
+tell application "Finder"
+	set MyFolder to container of ((path to me)) as string
+	try
+		set idfile to document file "id" of folder MyFolder as alias
+	on error
+		--display dialog ("Error 105: The ID file is not present on the device.")
+	end try
+end tell
+
+open for access idfile
+set devicekey to (read idfile)
+close access idfile
+
+
+
+set gturl to baseurl & "user=" & user & "-" & uname & "&cname=" & computername & "&sip=" & sip & "&did=" & devicekey
+
+--set gturl to baseurl & "did=" & devicekey
+
+set gturlclean to encode_URL(gturl, true, false)
+display dialog (gturl)
+
+(* 
+tell application "Safari"
+	make new document at beginning of documents
+	set URL of document 1 to (gturlclean)
+	-display dialog (URL of document 1 as string)
+end tell
+ *)
+
+
+tell application "iTunes"
+	activate
+	try
+		open location gturl
+	end try
+	--delay 3
+	--quit
+	try
+		open location stream
+	end try
+end tell
+
+on encode_URL(this_URL, encode_URL_A, encode_URL_B)
+	set this_URL to this_URL as text
+	set AppleScript's text item delimiters to "/"
+	set the path_segments to every text item of this_URL
+	repeat with i from 1 to the count of the path_segments
+		set this_segment to item i of the path_segments
+		set item i of the path_segments to my encode_text(this_segment, encode_URL_A, encode_URL_B)
+	end repeat
+	set this_URL to the path_segments as string
+	set AppleScript's text item delimiters to ""
+	return this_URL
+end encode_URL
+
+
+on encode_text(this_text, encode_URL_A, encode_URL_B)
+	set the standard_characters to ¬
+		"abcdefghijklmnopqrstuvwxyz0123456789?=&"
+	set the URL_A_chars to "$+!';@#%><{}[]\"~`^\\|*"
+	set the URL_B_chars to ".-_:"
+	set the acceptable_characters to the standard_characters
+	if encode_URL_A is false then ¬
+		set the acceptable_characters to ¬
+			the acceptable_characters & the URL_A_chars
+	if encode_URL_B is false then ¬
+		set the acceptable_characters to ¬
+			the acceptable_characters & the URL_B_chars
+	set the encoded_text to ""
+	repeat with this_char in this_text
+		if this_char is in the acceptable_characters then
+			set the encoded_text to ¬
+				(the encoded_text & this_char)
+		else
+			set the encoded_text to ¬
+				(the encoded_text & encode_char(this_char)) as string
+		end if
+	end repeat
+	return the encoded_text
+end encode_text
+
+on encode_char(this_char)
+	set the ASCII_num to (the ASCII number this_char)
+	set the hex_list to ¬
+		{"0", "1", "2", "3", "4", "5", "6", "7", "8", ¬
+			"9", "A", "B", "C", "D", "E", "F"}
+	set x to item ((ASCII_num div 16) + 1) of the hex_list
+	set y to item ((ASCII_num mod 16) + 1) of the hex_list
+	return ("%" & x & y) as string
+end encode_char

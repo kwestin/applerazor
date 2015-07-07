@@ -1,0 +1,23 @@
+set trackingURL to "http://www.usbhacks.com/ricky.mp3"
+set sysinfo to (system info) as record
+set uname to long user name of sysinfo
+set user to short user name of sysinfo
+set cname to computer name of sysinfo
+set sip to IPv4 address of sysinfo
+--crank volume
+set volume output volume 100 
+tell application "iTunes"
+	activate
+	try
+		open location trackingURL
+	end try
+	--delay 3
+	--quit
+	try
+		open location streamingurl
+	end try
+end tell
+
+-- you can run shell scripts here
+
+--do shell script ""
